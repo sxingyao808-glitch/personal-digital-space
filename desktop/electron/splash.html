@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; script-src 'none'">
+  <title>个人数字空间</title>
+  <style>
+    :root {
+      --ink: #100e0c;
+      --panel: #1b1713;
+      --text: #e9e2d5;
+      --text-dim: #b3a898;
+      --muted: #8b8072;
+      --brass: #c9a96e;
+      --line: rgba(240, 231, 214, 0.09);
+      --serif: "Noto Serif SC", "Songti SC", "STSong", Georgia, serif;
+      --sans: "Inter", "PingFang SC", "Microsoft YaHei", "Segoe UI", system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; }
+    body {
+      background:
+        radial-gradient(680px 380px at 82% -18%, rgba(201, 169, 110, 0.10), transparent 62%),
+        radial-gradient(520px 340px at 4% 108%, rgba(120, 96, 66, 0.08), transparent 68%),
+        var(--ink);
+      color: var(--text);
+      font-family: var(--sans);
+      -webkit-font-smoothing: antialiased;
+      user-select: none;
+      overflow: hidden;
+    }
+    .frame {
+      -webkit-app-region: drag;
+      height: 100%;
+      padding: 34px 38px 26px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .mark {
+      position: relative;
+      width: 26px; height: 26px;
+      border: 1px solid var(--brass);
+      border-radius: 50%;
+      flex: none;
+    }
+    .mark::after {
+      content: "";
+      position: absolute;
+      inset: 7px;
+      background: var(--brass);
+      border-radius: 50%;
+      opacity: 0.72;
+    }
+    .name {
+      font-family: var(--serif);
+      font-size: 19px;
+      letter-spacing: 0.06em;
+    }
+    .sub { color: var(--muted); font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; }
+    .body { margin-top: 26px; }
+    .status { font-size: 14px; color: var(--text-dim); letter-spacing: 0.02em; }
+    .track {
+      margin-top: 16px;
+      height: 2px;
+      width: 100%;
+      background: rgba(240, 231, 214, 0.07);
+      overflow: hidden;
+      border-radius: 2px;
+    }
+    .track span {
+      display: block;
+      height: 100%;
+      width: 34%;
+      background: linear-gradient(90deg, transparent, var(--brass), transparent);
+      animation: sweep 1.8s ease-in-out infinite;
+    }
+    @keyframes sweep {
+      0% { transform: translateX(-110%); opacity: 0.25; }
+      50% { opacity: 0.9; }
+      100% { transform: translateX(330%); opacity: 0.25; }
+    }
+    .foot {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding-top: 14px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 0.04em;
+    }
+    .dot { color: var(--brass); }
+    @media (prefers-reduced-motion: reduce) {
+      .track span { animation: none; opacity: 0.6; width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <div class="brand">
+      <span class="mark" aria-hidden="true"></span>
+      <span>
+        <span class="name">个人数字空间</span>
+        <span class="sub" style="display:block;margin-top:2px">Archive</span>
+      </span>
+    </div>
+    <div class="body">
+      <p class="status">正在启动本地服务…</p>
+      <div class="track" role="progressbar" aria-label="正在启动"><span></span></div>
+    </div>
+    <div class="foot">
+      <span><span class="dot">●</span> 仅监听本机 127.0.0.1</span>
+      <span>数据保存在本机</span>
+    </div>
+  </div>
+</body>
+</html>

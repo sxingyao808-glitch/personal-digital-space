@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; script-src 'unsafe-inline'">
+  <title>个人数字空间</title>
+  <style>
+    :root {
+      --ink: #100e0c;
+      --panel: #171310;
+      --line: rgba(240, 231, 214, 0.09);
+      --line-strong: rgba(240, 231, 214, 0.16);
+      --text: #e9e2d5;
+      --text-dim: #b3a898;
+      --muted: #8b8072;
+      --brass: #c9a96e;
+      --danger: #c97d6f;
+      --serif: "Noto Serif SC", "Songti SC", "STSong", Georgia, serif;
+      --sans: "Inter", "PingFang SC", "Microsoft YaHei", "Segoe UI", system-ui, sans-serif;
+      --mono: "Cascadia Mono", "SFMono-Regular", Consolas, monospace;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; }
+    body {
+      background:
+        radial-gradient(720px 420px at 84% -16%, rgba(201, 169, 110, 0.08), transparent 62%),
+        var(--ink);
+      color: var(--text);
+      font-family: var(--sans);
+      -webkit-font-smoothing: antialiased;
+      display: flex;
+      flex-direction: column;
+      padding: 32px 36px 26px;
+      user-select: none;
+    }
+    .eyebrow {
+      margin: 0;
+      font-size: 11px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    h1 {
+      margin: 12px 0 0;
+      font-family: var(--serif);
+      font-size: 24px;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+    }
+    .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 22px; }
+    .mark { position: relative; width: 14px; height: 14px; border: 1px solid var(--brass); border-radius: 50%; flex: none; }
+    .mark::after { content: ""; position: absolute; inset: 4px; background: var(--brass); border-radius: 50%; opacity: 0.7; }
+    .brand-name { font-family: var(--serif); font-size: 14px; letter-spacing: 0.08em; color: var(--text-dim); }
+    .message {
+      margin: 14px 0 0;
+      color: var(--text-dim);
+      font-size: 14px;
+      line-height: 1.75;
+      white-space: pre-wrap;
+    }
+    .meta {
+      margin: 18px 0 0;
+      display: grid;
+      grid-template-columns: 84px 1fr;
+      gap: 6px 12px;
+      font-size: 12px;
+      color: var(--muted);
+      word-break: break-all;
+    }
+    .meta dt { color: var(--muted); }
+    .meta dd { margin: 0; color: var(--text-dim); font-family: var(--mono); font-size: 11.5px; user-select: text; }
+    .detail-wrap { margin-top: 18px; flex: 1; min-height: 0; display: flex; flex-direction: column; }
+    .detail-label { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+    pre {
+      margin: 0;
+      flex: 1;
+      overflow: auto;
+      padding: 12px 14px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: var(--text-dim);
+      font-family: var(--mono);
+      font-size: 11.5px;
+      line-height: 1.65;
+      white-space: pre-wrap;
+      word-break: break-word;
+      user-select: text;
+    }
+    .actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 20px;
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+    }
+    button {
+      font: inherit;
+      font-size: 13px;
+      padding: 9px 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 140ms ease, border-color 140ms ease;
+    }
+    .ghost { background: transparent; color: var(--text-dim); border: 1px solid var(--line-strong); }
+    .ghost:hover { border-color: rgba(201, 169, 110, 0.42); color: var(--text); }
+    .primary { background: var(--brass); border: 1px solid var(--brass); color: #171310; font-weight: 600; }
+    .primary:hover { background: #d5b87f; border-color: #d5b87f; }
+    button:focus-visible { outline: 2px solid rgba(201, 169, 110, 0.72); outline-offset: 2px; }
+    .hint { margin: 10px 0 0; font-size: 11.5px; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="brand">
+    <span class="mark" aria-hidden="true"></span>
+    <span class="brand-name">个人数字空间</span>
+  </div>
+
+  <p class="eyebrow" id="eyebrow">DESKTOP STARTUP</p>
+  <h1 id="title">启动失败</h1>
+  <p class="message" id="message"></p>
+
+  <dl class="meta">
+    <dt>数据目录</dt>
+    <dd id="data-dir">—</dd>
+    <dt>日志目录</dt>
+    <dd id="log-dir">—</dd>
+  </dl>
+
+  <div class="detail-wrap" id="detail-wrap">
+    <p class="detail-label">诊断信息</p>
+    <pre id="detail"></pre>
+  </div>
+
+  <p class="hint">数据始终保存在本机数据目录中；本次失败不会修改或删除已有内容。</p>
+
+  <div class="actions">
+    <button class="ghost" id="quit" type="button">退出</button>
+    <button class="primary" id="retry" type="button">重新尝试</button>
+  </div>
+
+  <script>
+    const shell = window.desktopShell;
+    const setText = (id, value) => {
+      const node = document.getElementById(id);
+      if (node) node.textContent = value && String(value).length ? String(value) : '—';
+    };
+
+    async function load() {
+      if (!shell) return;
+      const context = await shell.getContext();
+      if (!context) return;
+      setText('title', context.title || '启动失败');
+      setText('message', context.message || '本地服务未能启动。');
+      setText('detail', context.detail || '（无附加诊断信息）');
+      setText('data-dir', context.dataDir || '');
+      setText('log-dir', context.logDir || '');
+      if (context.kind === 'runtime') setText('eyebrow', 'DESKTOP RUNTIME');
+    }
+
+    document.getElementById('retry').addEventListener('click', () => {
+      if (shell) shell.retry();
+    });
+    document.getElementById('quit').addEventListener('click', () => {
+      if (shell) shell.quit();
+    });
+    load();
+  </script>
+</body>
+</html>

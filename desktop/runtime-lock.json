@@ -1,0 +1,10 @@
+{
+  "python_version": "3.14.10",
+  "python_archive": "https://www.python.org/ftp/python/3.14.10/python-3.14.10-embed-amd64.zip",
+  "python_archive_sha256": "90905e64a840557d8c1bc4f5b74db3d7ee85e3ffb217611cac1c7813acea4159",
+  "sqlite_archive": "https://sqlite.org/2026/sqlite-dll-win-x64-3540100.zip",
+  "sqlite_archive_sha3_256": "c2d09c8babb9399277055c057c97a53f1ffd7c5f11d0c1f2118ffdfa39f2daa4",
+  "sqlite_version": "3.54.1",
+  "sqlite_source_id": "2026-10-16 14:45:20 555e07ef33f69a0957d24d8e555b702464a131d6f1607f4c3c1e4551e8e6ca76",
+  "sqlite_dll_sha256": "4b59d3cded9dc1608544160f3b4b10ac974c6ac0d6ffc23064e5f4c8dbd05aea"
+}

@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf }}">
+  <meta name="referrer" content="no-referrer">
+  <title>Archive · 私人档案</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span class="brand-name">Archive</span>
+        <span class="brand-sub">私人档案 · 本地</span>
+      </div>
+      <nav class="top-nav" aria-label="主导航">
+        <a class="nav-link active" href="/" aria-current="page">内容</a>
+        <a class="nav-link" href="/releases">发布</a>
+      </nav>
+      <div class="top-actions">
+        <input id="search-input" class="search-input" type="search" placeholder="搜索内容" autocomplete="off" aria-label="搜索内容">
+        <button id="export-button" class="ghost-button" type="button">导出归档</button>
+        <button id="integrity-button" class="ghost-button" type="button">
+          完整性
+          <span id="integrity-badge" class="count-badge hidden">0</span>
+        </button>
+        <button id="new-button" class="primary-button" type="button">新建</button>
+      </div>
+    </header>
+
+    <div class="layout">
+      <aside class="sidebar">
+        <nav id="space-nav" class="space-nav" aria-label="空间导航">
+          <button class="space-button active" type="button" data-space="HOME" aria-pressed="true"><span class="space-code">HOME</span><span class="space-name">入口</span></button>
+          <button class="space-button" type="button" data-space="ME" aria-pressed="false"><span class="space-code">ME</span><span class="space-name">关于我</span></button>
+          <button class="space-button" type="button" data-space="BUILD" aria-pressed="false"><span class="space-code">BUILD</span><span class="space-name">创造</span></button>
+          <button class="space-button" type="button" data-space="THINK" aria-pressed="false"><span class="space-code">THINK</span><span class="space-name">思考</span></button>
+          <button class="space-button" type="button" data-space="JOURNEY" aria-pressed="false"><span class="space-code">JOURNEY</span><span class="space-name">经历</span></button>
+          <button class="space-button" type="button" data-space="COMPETE" aria-pressed="false"><span class="space-code">COMPETE</span><span class="space-name">竞赛</span></button>
+          <button class="space-button" type="button" data-space="ARCHIVE" aria-pressed="false"><span class="space-code">ARCHIVE</span><span class="space-name">归档</span></button>
+        </nav>
+        <div class="sidebar-head">
+          <span id="list-label" class="eyebrow">全部内容</span>
+          <label class="trash-toggle">
+            <input id="trash-toggle" type="checkbox">
+            <span>回收站</span>
+          </label>
+        </div>
+        <div class="filter-row">
+          <select id="type-filter" aria-label="按类型筛选">
+            <option value="">全部类型</option>
+            <option value="PROJECT">项目</option>
+            <option value="THOUGHT">思考</option>
+            <option value="EXPERIENCE">经历</option>
+          </select>
+          <select id="lifecycle-filter" aria-label="按生命周期筛选">
+            <option value="">全部状态</option>
+            <option value="DRAFT">草稿</option>
+            <option value="PUBLISHED">已发布</option>
+            <option value="COMPLETED">已完成</option>
+            <option value="ARCHIVED">已归档</option>
+          </select>
+        </div>
+        <ul id="content-list" class="content-list" aria-label="内容列表"></ul>
+        <div id="list-empty" class="empty-mini hidden">
+          <p id="list-empty-text">这里还没有记录。</p>
+          <button id="list-empty-action" class="ghost-button tiny hidden" type="button"></button>
+        </div>
+      </aside>
+
+      <main class="main">
+        <section id="overview-panel" class="overview hidden" aria-label="空间入口">
+          <p id="overview-eyebrow" class="eyebrow">PERSONAL SPACE</p>
+          <h1 id="overview-title" class="overview-title">个人数字空间</h1>
+          <p id="overview-copy" class="overview-copy"></p>
+          <div id="overview-spaces" class="overview-spaces"></div>
+          <div class="overview-recent">
+            <div class="section-head">
+              <span id="overview-recent-label" class="eyebrow">最近更新</span>
+              <button id="overview-new" class="primary-button" type="button">新建内容</button>
+            </div>
+            <ul id="overview-recent-list" class="overview-list"></ul>
+            <p id="overview-recent-empty" class="empty-mini"></p>
+          </div>
+          <p class="empty-note">所有内容保存在本机。默认私有，公开由你明确决定。</p>
+        </section>
+
+        <section id="empty-state" class="empty-state hidden">
+          <p class="eyebrow">PRIVATE ARCHIVE</p>
+          <h1>让发生过的事，<br>留在它发生的地方。</h1>
+          <p class="empty-copy">记录、连接、保留。默认私有，公开由你明确决定。</p>
+          <button id="empty-new-button" class="primary-button" type="button">写下第一条</button>
+          <p class="empty-note">所有内容保存在本机。删除可恢复，附件写入可核对。</p>
+        </section>
+
+        <section id="editor-panel" class="editor hidden" aria-label="内容编辑器">
+          <div class="editor-head">
+            <div class="editor-identity">
+              <span id="content-id" class="id-chip"></span>
+              <span id="content-state" class="state-chip"></span>
+            </div>
+            <div class="editor-actions">
+              <button id="close-button" class="ghost-button" type="button">返回</button>
+              <button id="edit-button" class="ghost-button hidden" type="button">编辑</button>
+              <a id="public-link" class="ghost-button hidden" target="_blank" rel="noopener">查看公开页</a>
+              <button id="restore-button" class="ghost-button hidden" type="button">恢复</button>
+              <button id="delete-button" class="ghost-button danger" type="button">删除</button>
+            </div>
+          </div>
+
+          <div id="readonly-banner" class="banner hidden"></div>
+
+          <div id="reader-view" class="reader hidden">
+            <p id="reader-meta" class="reader-meta"></p>
+            <h1 id="reader-title" class="reader-title"></h1>
+            <p id="reader-summary" class="reader-summary hidden"></p>
+            <div id="reader-body" class="reader-body"></div>
+          </div>
+
+          <div id="edit-view" class="edit-view">
+          <input id="title-input" class="title-input" type="text" placeholder="标题" autocomplete="off" aria-label="标题">
+          <textarea id="summary-input" class="summary-input" rows="3" placeholder="摘要（独立于正文，可单独编辑与检索）" aria-label="摘要"></textarea>
+          <div class="model-row">
+            <label class="model-field">
+              <span class="field-label">类型</span>
+              <select id="type-input">
+                <option value="PROJECT">PROJECT · 项目</option>
+                <option value="THOUGHT">THOUGHT · 思考</option>
+                <option value="EXPERIENCE">EXPERIENCE · 经历</option>
+              </select>
+            </label>
+            <label class="model-field">
+              <span class="field-label">主要空间</span>
+              <select id="primary-space-input">
+                <option value="ME">ME · 关于我</option>
+                <option value="BUILD">BUILD · 创造</option>
+                <option value="THINK">THINK · 思考</option>
+                <option value="JOURNEY">JOURNEY · 经历</option>
+                <option value="COMPETE">COMPETE · 竞赛</option>
+              </select>
+            </label>
+            <label class="model-field">
+              <span class="field-label">生命周期</span>
+              <select id="lifecycle-input">
+                <option value="DRAFT">DRAFT · 草稿</option>
+                <option value="PUBLISHED">PUBLISHED · 已发布</option>
+                <option value="COMPLETED">COMPLETED · 已完成</option>
+                <option value="ARCHIVED">ARCHIVED · 已归档</option>
+              </select>
+            </label>
+          </div>
+          <div class="related-group">
+            <span class="field-label">关联空间</span>
+            <div id="related-space-options" class="space-options"></div>
+            <p class="panel-note">关联空间只增加展示入口，不复制内容，也不改变主要归属。</p>
+          </div>
+          <textarea id="body-input" class="body-input" placeholder="写下此刻的内容…" aria-label="正文"></textarea>
+
+          <div class="editor-foot">
+            <div class="visibility-group" role="group" aria-label="可见性">
+              <span class="field-label">可见性</span>
+              <button class="visibility-button" type="button" data-visibility="none">未选择</button>
+              <button class="visibility-button" type="button" data-visibility="private">私有</button>
+              <button class="visibility-button" type="button" data-visibility="public">公开</button>
+            </div>
+            <div class="save-cluster">
+              <span id="save-status" class="save-status" role="status" aria-live="polite"></span>
+              <button id="save-button" class="primary-button" type="button">保存</button>
+            </div>
+          </div>
+          <p class="visibility-note">未选择时按私有保存，不会进入公开访问；修改一条内容的可见性不会连带公开它的关系或附件。</p>
+          </div>
+
+          <div id="publication-drift-note" class="drift-note hidden" role="status" aria-live="polite"></div>
+
+          <div id="conflict-banner" class="banner conflict hidden">
+            <span id="conflict-text">内容已在别处更新。你的输入仍保留。</span>
+            <span class="banner-actions">
+              <button id="conflict-reload" class="ghost-button" type="button">重新载入</button>
+              <button id="conflict-keep" class="ghost-button" type="button">继续编辑</button>
+            </span>
+          </div>
+
+          <div class="tabs" role="tablist" aria-label="内容详情">
+            <button class="tab active" type="button" role="tab" data-tab="relations" aria-selected="true">关系</button>
+            <button class="tab" type="button" role="tab" data-tab="attributes" aria-selected="false">属性</button>
+            <button class="tab" type="button" role="tab" data-tab="attachments" aria-selected="false">附件</button>
+            <button class="tab" type="button" role="tab" data-tab="info" aria-selected="false">信息</button>
+          </div>
+
+          <div id="panel-relations" class="tab-panel" role="tabpanel">
+            <ul id="relations-list" class="record-list"></ul>
+            <p id="relations-empty" class="empty-mini">还没有关系。</p>
+            <div class="add-row">
+              <select id="relation-target" aria-label="关系目标"></select>
+              <select id="relation-type" aria-label="关系类型">
+                <option value="REFERENCES">REFERENCES · 引用</option>
+                <option value="PART_OF">PART_OF · 属于</option>
+                <option value="DERIVED_FROM">DERIVED_FROM · 衍生自</option>
+                <option value="LED_TO">LED_TO · 导致</option>
+                <option value="EVOLVED_INTO">EVOLVED_INTO · 演化为</option>
+              </select>
+              <button id="add-relation-button" class="ghost-button" type="button">添加关系</button>
+            </div>
+            <p class="panel-note">关系是记录下来的连接，不证明某种解释为真。</p>
+          </div>
+
+          <div id="panel-attributes" class="tab-panel hidden" role="tabpanel">
+            <ul id="attributes-list" class="record-list"></ul>
+            <p id="attributes-empty" class="empty-mini">还没有属性。</p>
+            <div class="add-grid">
+              <input id="attribute-key" type="text" placeholder="属性名称" aria-label="属性名称">
+              <input id="attribute-value" type="text" placeholder="属性值" aria-label="属性值">
+              <select id="attribute-provenance" aria-label="来源">
+                <option value="user">用户提供</option>
+                <option value="ai_inferred">AI 推断</option>
+                <option value="ai_suggested">AI 建议</option>
+                <option value="user_confirmed">用户确认</option>
+              </select>
+              <input id="attribute-source" type="text" placeholder="来源说明（可选）" aria-label="来源说明">
+              <label class="check-label"><input id="attribute-confirmed" type="checkbox"> 已确认</label>
+              <button id="add-attribute-button" class="ghost-button" type="button">添加属性</button>
+            </div>
+            <p class="panel-note">AI 推断与建议不会自动成为已确认事实；确认时会转为“用户确认”。</p>
+          </div>
+
+          <div id="panel-attachments" class="tab-panel hidden" role="tabpanel">
+            <ul id="attachments-list" class="record-list"></ul>
+            <p id="attachments-empty" class="empty-mini">还没有附件。</p>
+            <div class="add-row">
+              <label class="file-label">
+                <input id="attachment-input" type="file">
+                <span>选择文件上传</span>
+              </label>
+              <span id="upload-status" class="upload-status" role="status" aria-live="polite"></span>
+            </div>
+            <p class="panel-note">附件有独立身份和独立可见性。上传失败不会显示为成功；结果不确定时可运行完整性核对。</p>
+          </div>
+
+          <div id="panel-info" class="tab-panel hidden" role="tabpanel">
+            <div id="info-body" class="info-grid"></div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div id="drawer-backdrop" class="drawer-backdrop hidden"></div>
+    <aside id="integrity-drawer" class="drawer hidden" aria-label="完整性审计">
+      <div class="drawer-head">
+        <div>
+          <p class="eyebrow">INTEGRITY</p>
+          <h2>完整性核对</h2>
+        </div>
+        <button id="integrity-close" class="ghost-button" type="button">关闭</button>
+      </div>
+      <div id="integrity-content" class="drawer-content"></div>
+      <div class="drawer-foot">
+        <button id="reconcile-button" class="primary-button" type="button">运行核对</button>
+        <span id="reconcile-status" class="save-status" role="status" aria-live="polite"></span>
+      </div>
+    </aside>
+
+    <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+
+    <dialog id="confirm-dialog" class="confirm-dialog">
+      <h2 id="confirm-title">确认</h2>
+      <p id="confirm-message"></p>
+      <div class="dialog-actions">
+        <button id="confirm-cancel" class="ghost-button" type="button">取消</button>
+        <button id="confirm-ok" class="primary-button" type="button">确认</button>
+      </div>
+    </dialog>
+  </div>
+
+  <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+</body>
+</html>

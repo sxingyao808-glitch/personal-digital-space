@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>公开内容 · Archive</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <main class="public-shell">
+    <div class="public-brand">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span>公开内容 · Archive</span>
+    </div>
+    <h1 class="public-title">公开内容</h1>
+    <p class="public-intro">
+      这里是由所有者明确选择公开的记录。未公开的内容、关系与属性不会出现在这个页面。
+    </p>
+    {% if catalog.entries %}
+    <nav class="public-list" aria-label="公开内容列表">
+      {% for item in catalog.entries %}
+      <a class="public-list-item" href="p/{{ item.id }}">
+        <span class="public-list-title">
+          {{ item.title }}
+          {% if item.summary %}<span class="public-list-summary">{{ item.summary }}</span>{% endif %}
+        </span>
+        <span class="public-list-date">
+          {% if item.type %}{{ item.type }} · {% endif %}{% if item.primary_space %}{{ item.primary_space }} · {% endif %}{{ item.updated_at[:10] }}
+        </span>
+      </a>
+      {% endfor %}
+    </nav>
+    {% else %}
+    <p class="public-empty">当前没有公开内容。</p>
+    {% endif %}
+    <p class="public-foot">这份列表只包含公开 Release 中的内容。私密内容永远不在此列。</p>
+  </main>
+</body>
+</html>

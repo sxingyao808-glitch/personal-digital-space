@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>进入 Archive · 私人档案</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+  <div class="centered-shell">
+    <main class="login-card">
+      <p class="eyebrow">PRIVATE ARCHIVE · LOCAL</p>
+      <h1>进入你的档案</h1>
+      <p class="login-copy">这是仅在本机运行的所有者入口。请使用启动时打印的一次性令牌。令牌只会出现在本地终端，不会写入页面或公开产物。</p>
+      {% if error %}
+      <p class="login-error">{{ error }}</p>
+      {% endif %}
+      <form method="post" action="/login" autocomplete="off">
+        <label for="token">所有者令牌</label>
+        <input id="token" class="token-input" type="password" name="token" required autofocus spellcheck="false">
+        <button class="primary-button" type="submit">验证并进入</button>
+      </form>
+      <p class="login-foot">服务只绑定回环地址。登录后使用签名的 HttpOnly 会话；所有写操作还需要 CSRF 校验。版本 {{ version }}。</p>
+    </main>
+  </div>
+</body>
+</html>

@@ -1,0 +1,75 @@
+{
+  "name": "personal-digital-space",
+  "productName": "个人数字空间 OSS",
+  "version": "1.0.0",
+  "description": "本地优先的个人数字空间桌面应用",
+  "author": "Personal Archive",
+  "license": "UNLICENSED",
+  "private": true,
+  "main": "electron/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win nsis --x64",
+    "build:backend": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-backend.ps1",
+    "verify:backend": "node scripts/probe-backend.js --exe backend-dist/archive-backend/archive-backend.exe",
+    "verify:packaged": "node scripts/verify-shell.js --packaged --electron release/win-unpacked/PersonalDigitalSpace.exe --app release/win-unpacked --data-dir \"%TEMP%\\pds-verify-data\" --user-data-dir \"%TEMP%\\pds-verify-profile\" --shot \"%TEMP%\\pds-verify.png\" --process-image archive-backend.exe",
+    "verify:lifecycle": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify-lifecycle.ps1 -Exe release/win-unpacked/PersonalDigitalSpace.exe -AppDir release/win-unpacked -DataDir \"%TEMP%\\pds-life\" -ProfileDir \"%TEMP%\\pds-life-profile\" -ProcessImage archive-backend.exe -Packaged",
+    "build:installer": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-installer.ps1"
+  },
+  "devDependencies": {
+    "electron": "45.3.2",
+    "electron-builder": "26.18.0"
+  },
+  "build": {
+    "appId": "com.personal.digitalspace.oss",
+    "productName": "个人数字空间 OSS",
+    "executableName": "PersonalDigitalSpace",
+    "copyright": "Personal Digital Space",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "electron/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "backend-dist/archive-backend",
+        "to": "backend"
+      },
+      {
+        "from": "build/icon.ico",
+        "to": "icon.ico"
+      }
+    ],
+    "asar": true,
+    "npmRebuild": false,
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.ico",
+      "artifactName": "PersonalDigitalSpace-Setup-${version}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowElevation": true,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "个人数字空间 OSS",
+      "deleteAppDataOnUninstall": false,
+      "runAfterFinish": true,
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "installerHeaderIcon": "build/icon.ico"
+    }
+  }
+}

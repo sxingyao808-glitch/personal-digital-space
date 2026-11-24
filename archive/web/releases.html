@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf }}">
+  <meta name="referrer" content="no-referrer">
+  <title>Archive · 发布管理</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+  <div class="shell release-page">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span class="brand-name">Archive</span>
+        <span class="brand-sub">发布管理</span>
+      </div>
+      <nav class="top-nav" aria-label="主导航">
+        <a class="nav-link" href="/">内容</a>
+        <a class="nav-link active" href="/releases" aria-current="page">发布</a>
+      </nav>
+      <div class="top-actions">
+        <button id="release-refresh" class="ghost-button" type="button">刷新</button>
+      </div>
+    </header>
+
+    <main class="release-main">
+      <section class="release-intro">
+        <h1>发布管理</h1>
+        <p class="release-intro-copy">
+          先将内容设为公开，再在这里预览并发布。
+        </p>
+      </section>
+
+      <section class="release-panel" aria-labelledby="release-current-title">
+        <div class="release-panel-head">
+          <div>
+            <h2 id="release-current-title">当前公开状态</h2>
+          </div>
+          <span id="release-current-chip" class="state-chip">读取中</span>
+        </div>
+        <div id="release-current-body" class="release-current-body"></div>
+        <div id="hosting-state" aria-live="polite"></div>
+        <details id="hosting-settings">
+          <summary>Cloudflare Pages 托管设置</summary>
+          <p class="release-note">在 Cloudflare 创建一个专用的直接上传项目和具有 Pages 编辑权限的 API Token，再在这里连接。</p>
+          <form id="hosting-form" class="release-filters" autocomplete="off">
+            <label class="release-field"><span>账户 ID</span><input id="hosting-account" type="text" required maxlength="32" spellcheck="false"></label>
+            <label class="release-field"><span>目标项目名称</span><input id="hosting-project" type="text" list="hosting-projects" required maxlength="58" spellcheck="false"></label>
+            <datalist id="hosting-projects"></datalist>
+            <label class="release-field"><span>API Token</span><input id="hosting-token" type="password" required maxlength="256" autocomplete="new-password" spellcheck="false"></label>
+            <div class="release-filter-actions">
+              <button id="hosting-list" class="ghost-button" type="button">查找项目</button>
+              <button id="hosting-save" class="ghost-button" type="submit">验证并保存</button>
+            </div>
+          </form>
+          <p class="release-note">API Token 保存在 Windows 凭据管理器。更新凭据时可重新填写。</p>
+          <p id="hosting-feedback" class="release-note" role="status"></p>
+        </details>
+      </section>
+
+      <section class="release-panel" aria-labelledby="one-click-title">
+        <div class="release-panel-head">
+          <div>
+            <h2 id="one-click-title">待发布的内容变化</h2>
+          </div>
+          <span id="one-click-chip" class="state-chip">读取中</span>
+        </div>
+        <p class="release-note">
+          待发布的网站会使用你已设为公开的内容与附件。
+        </p>
+        <div id="one-click-plan" class="release-current-body"></div>
+        <div id="one-click-state"></div>
+        <p id="one-click-changes" class="release-note" aria-live="polite"></p>
+        <div class="release-actions">
+          <button id="one-click-preview-draft" class="ghost-button" type="button" disabled>预览待发布网站</button>
+          <a id="one-click-preview-link" class="ghost-button hidden" href="/preview/" target="_blank" rel="noopener">预览当前本机网站</a>
+          <button id="one-click-publish" class="primary-button" type="button" disabled>发布到网站</button>
+        </div>
+        <div id="one-click-result" class="release-result hidden" aria-live="polite"></div>
+        <div id="one-click-preview-draft-result" class="release-result hidden" aria-live="polite"></div>
+      </section>
+
+      <details class="release-panel" id="release-advanced">
+        <summary>高级设置</summary>
+        <p id="release-revision" class="release-note"></p>
+        <button id="one-click-force" class="ghost-button" type="button" disabled>重新生成本机网站</button>
+        <button id="hosting-sync" class="ghost-button hidden" type="button" disabled>将当前本机网站同步到线上</button>
+        <button id="one-click-redeploy" class="ghost-button hidden" type="button" disabled>强制重新部署</button>
+        <details id="release-tab-publish" class="release-tab-panel">
+          <summary>高级操作 · 手动选择本机发布内容</summary>
+          <p class="release-note">
+            只选择当前处于公开状态的内容。预览是只读的：不生成 Bundle、不修改注册表、不写入事件。
+          </p>
+          <div id="publish-candidates" class="release-pick-list"></div>
+          <p id="publish-selection-summary" class="release-note" role="status" aria-live="polite"></p>
+          <div class="release-actions">
+            <button id="publish-preview-button" class="ghost-button" type="button" disabled>只读预览</button>
+            <button id="publish-submit-button" class="primary-button" type="button" disabled>确认并发布</button>
+          </div>
+          <div id="publish-preview-result" class="release-result hidden" aria-live="polite"></div>
+        </details>
+        <div aria-labelledby="release-drift-title">
+        <div class="release-panel-head">
+          <div>
+            <h2 id="release-drift-title">公开副本一致性</h2>
+          </div>
+          <span id="release-drift-chip" class="state-chip">读取中</span>
+        </div>
+        <p class="release-note">
+          这里只读比对“当前工作区”与“实际公开副本”。检查不会修改任何内容、不会自动撤回，也不会写入审计事件。
+        </p>
+        <div id="release-drift-body" class="release-current-body"></div>
+        </div>
+      </details>
+
+      <details class="release-panel" id="release-history">
+        <summary>发布历史</summary>
+        <p id="release-history-count" class="release-count"></p>
+
+        <details>
+          <summary>高级筛选</summary>
+        <div class="release-filters">
+          <label class="release-field">
+            <span>状态</span>
+            <select id="filter-status">
+              <option value="">全部</option>
+              <option value="active">已激活</option>
+              <option value="prepared">已准备未公开</option>
+              <option value="superseded">已被替代</option>
+              <option value="withdrawn">已撤回</option>
+            </select>
+          </label>
+          <label class="release-field">
+            <span>操作</span>
+            <select id="filter-action">
+              <option value="">全部</option>
+              <option value="publish">发布</option>
+              <option value="prepared">准备</option>
+              <option value="withdraw_all">整体撤回</option>
+              <option value="withdraw_subset">部分撤回</option>
+              <option value="restore_full">全量恢复</option>
+              <option value="restore_subset">部分恢复</option>
+            </select>
+          </label>
+          <label class="release-field">
+            <span>内容</span>
+            <input id="filter-content" type="text" placeholder="content_id" autocomplete="off">
+          </label>
+          <label class="release-field">
+            <span>起始时间</span>
+            <input id="filter-since" type="datetime-local">
+          </label>
+          <label class="release-field">
+            <span>结束时间</span>
+            <input id="filter-until" type="datetime-local">
+          </label>
+          <div class="release-filter-actions">
+            <button id="filter-apply" class="ghost-button" type="button">应用筛选</button>
+            <button id="filter-reset" class="ghost-button" type="button">清除</button>
+          </div>
+        </div>
+
+        </details>
+        <p id="release-history-status" class="release-note" role="status" aria-live="polite"></p>
+        <div id="release-history-list" class="release-list"></div>
+        <details id="hosting-history" class="hidden">
+          <summary>线上部署记录</summary>
+          <div id="hosting-history-list" class="release-list"></div>
+        </details>
+        <div class="release-pager">
+          <button id="release-history-more" class="ghost-button hidden" type="button">载入更多</button>
+          <span id="release-history-total" class="release-note"></span>
+        </div>
+      </details>
+
+      <details class="release-panel" id="release-operations">
+        <summary>撤回与恢复</summary>
+
+        <div class="tabs" role="tablist" aria-label="发布操作">
+          <button class="tab active" type="button" role="tab" data-release-tab="withdraw" aria-selected="true">撤回</button>
+          <button class="tab" type="button" role="tab" data-release-tab="restore" aria-selected="false">历史恢复</button>
+        </div>
+
+
+
+
+        <div id="release-tab-withdraw" class="release-tab-panel" role="tabpanel">
+          <p class="release-note">
+            可以撤回全部，也可以只撤回部分。已连接托管时，确认会同时更新线上网站。
+          </p>
+          <div id="withdraw-candidates" class="release-pick-list"></div>
+          <p id="withdraw-summary" class="release-note" role="status" aria-live="polite"></p>
+          <div class="release-actions">
+            <button id="withdraw-submit-button" class="primary-button danger" type="button" disabled>撤回所选内容</button>
+          </div>
+          <div id="withdraw-result" class="release-result hidden" aria-live="polite"></div>
+        </div>
+
+        <div id="release-tab-restore" class="release-tab-panel hidden" role="tabpanel">
+          <p class="release-note">
+            选择以前发布过的内容，生成一个新的本机公开版本。可以在高级设置将它同步到线上。
+          </p>
+
+          <div class="release-restore-source">
+            <label class="release-field">
+              <span>历史版本</span>
+              <select id="restore-source"></select>
+            </label>
+            <button id="restore-load-button" class="ghost-button" type="button">载入来源</button>
+          </div>
+          <div id="restore-source-info" class="release-source-info"></div>
+
+          <div id="restore-scope-row" class="release-scope-row hidden">
+            <label class="check-label">
+              <input id="restore-scope-full" type="radio" name="restore-scope" value="full" checked>
+              全量恢复
+            </label>
+            <label class="check-label">
+              <input id="restore-scope-subset" type="radio" name="restore-scope" value="subset">
+              部分恢复
+            </label>
+          </div>
+
+          <div id="restore-candidates" class="release-pick-list"></div>
+          <p id="restore-summary" class="release-note" role="status" aria-live="polite"></p>
+          <div class="release-actions">
+            <button id="restore-preview-button" class="ghost-button" type="button" disabled>预览恢复结果</button>
+            <button id="restore-submit-button" class="primary-button" type="button" disabled>执行恢复</button>
+          </div>
+          <div id="restore-preview-result" class="release-result hidden" aria-live="polite"></div>
+          <label id="restore-withdrawn-wrap" class="check-label release-confirm-line hidden">
+            <input id="restore-withdrawn-confirm" type="checkbox">
+            我确认重新公开曾在后续版本中被撤回的内容。
+          </label>
+          <label class="check-label release-confirm-line">
+            <input id="restore-final-confirm" type="checkbox">
+            我理解恢复会改变当前公开内容，并生成新版本。
+          </label>
+          <div id="restore-result" class="release-result hidden" aria-live="polite"></div>
+        </div>
+      </details>
+    </main>
+
+    <div id="release-drawer-backdrop" class="drawer-backdrop hidden"></div>
+    <aside id="release-drawer" class="drawer hidden" aria-label="版本详情">
+      <div class="drawer-head">
+        <div>
+          <h2 id="release-detail-title">版本详情</h2>
+        </div>
+        <button id="release-detail-close" class="ghost-button" type="button">关闭</button>
+      </div>
+      <div id="release-detail-content" class="drawer-content"></div>
+      <div class="drawer-foot">
+        <span id="release-detail-state" class="release-note" role="status" aria-live="polite"></span>
+        <button id="release-detail-verify" class="ghost-button" type="button">校验完整性</button>
+      </div>
+    </aside>
+
+    <div id="release-toast" class="toast hidden" role="status" aria-live="polite"></div>
+
+    <dialog id="release-confirm-dialog" class="confirm-dialog">
+      <h2 id="release-confirm-title">确认</h2>
+      <p id="release-confirm-message"></p>
+      <div class="dialog-actions">
+        <button id="release-confirm-cancel" class="ghost-button" type="button">取消</button>
+        <button id="release-confirm-ok" class="primary-button" type="button">确认</button>
+      </div>
+    </dialog>
+  </div>
+
+  <script src="{{ url_for('static', filename='releases.js') }}" defer></script>
+</body>
+</html>
