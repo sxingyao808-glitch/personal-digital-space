@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "description": "本地优先的个人数字空间桌面应用",
   "author": "Personal Archive",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "private": true,
   "main": "electron/main.js",
   "scripts": {
@@ -24,7 +24,7 @@
     "appId": "com.personal.digitalspace.oss",
     "productName": "个人数字空间 OSS",
     "executableName": "PersonalDigitalSpace",
-    "copyright": "Personal Digital Space",
+    "copyright": "Copyright (c) 2026 sxingyao808-glitch",
     "directories": {
       "output": "release",
       "buildResources": "build"

@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.0.0 source release candidate
+## 1.0.0 source release
 
 - Local content, relationships, attributes, attachments, search, and archive lifecycle.
 - Preview, activation, and withdrawal for local static releases, with opt-in Cloudflare Pages hosting.
