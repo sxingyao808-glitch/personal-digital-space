@@ -415,6 +415,31 @@ class ArchiveTestCase(unittest.TestCase):
         wrong_login = self.anonymous.post("/login", data={"token": "wrong-token"})
         self.assertEqual(wrong_login.status_code, 403)
 
+    def test_owner_api_csrf_rejects_invalid_and_malformed_tokens(self):
+        self.create_content("Valid CSRF")
+
+        valid_token = self.headers["X-CSRF-Token"]
+        wrong_token = ("A" if valid_token[0] != "A" else "B") + valid_token[1:]
+        for token in ("", wrong_token, "café"):
+            with self.subTest(token=token):
+                response = self.owner.post(
+                    "/api/content", json={"title": "Rejected"}, headers={"X-CSRF-Token": token}
+                )
+                self.assertEqual(response.status_code, 403)
+                self.assertEqual(response.get_json()["error"]["code"], "csrf_failed")
+
+        for stored_token in (123, "café"):
+            with self.subTest(stored_token=stored_token):
+                with self.owner.session_transaction() as session:
+                    session["csrf"] = stored_token
+                response = self.owner.post(
+                    "/api/content",
+                    json={"title": "Rejected"},
+                    headers={"X-CSRF-Token": str(stored_token)},
+                )
+                self.assertEqual(response.status_code, 403)
+                self.assertEqual(response.get_json()["error"]["code"], "csrf_failed")
+
     def test_host_guard_rejects_foreign_host_headers(self):
         response = self.anonymous.get("/api/health", headers={"Host": "evil.example"})
         self.assertEqual(response.status_code, 403)

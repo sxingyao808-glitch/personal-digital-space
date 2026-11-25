@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import hmac
 import json
 import secrets
 from datetime import timedelta
@@ -170,7 +171,14 @@ def create_app(
                 ), 401
             if request.method in ("POST", "PATCH", "PUT", "DELETE"):
                 csrf = request.headers.get("X-CSRF-Token")
-                if not csrf or csrf != session.get("csrf"):
+                expected_csrf = session.get("csrf")
+                if not (
+                    csrf
+                    and csrf.isascii()
+                    and isinstance(expected_csrf, str)
+                    and expected_csrf.isascii()
+                    and hmac.compare_digest(csrf, expected_csrf)
+                ):
                     return jsonify(
                         {"ok": False, "error": {"code": "csrf_failed", "message": "CSRF 校验失败。"}}
                     ), 403

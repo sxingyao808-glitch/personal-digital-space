@@ -1,0 +1,76 @@
+name: Windows CI
+
+on: [push, pull_request]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: windows-2025
+    timeout-minutes: 20
+    env:
+      PDS_CLOUDFLARE_DISCOVERY_CONNECTION: ''
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Prepare locked CPython and SQLite
+        shell: pwsh
+        run: |
+          $lock = Get-Content desktop/runtime-lock.json -Raw | ConvertFrom-Json
+          $pythonZip = Join-Path $env:RUNNER_TEMP 'pds-cpython.zip'
+          $sqliteZip = Join-Path $env:RUNNER_TEMP 'pds-sqlite.zip'
+          $runtime = Join-Path $env:RUNNER_TEMP 'pds-runtime'
+          $sqlite = Join-Path $env:RUNNER_TEMP 'pds-sqlite'
+
+          Invoke-WebRequest -Uri $lock.python_archive -OutFile $pythonZip
+          if ((Get-FileHash -LiteralPath $pythonZip -Algorithm SHA256).Hash -ne $lock.python_archive_sha256) {
+            throw 'CPython archive hash differs from desktop/runtime-lock.json.'
+          }
+          Expand-Archive -LiteralPath $pythonZip -DestinationPath $runtime
+
+          Invoke-WebRequest -Uri $lock.sqlite_archive -OutFile $sqliteZip
+          $sqliteHash = [Convert]::ToHexString([System.Security.Cryptography.SHA3_256]::HashData(
+            [System.IO.File]::ReadAllBytes($sqliteZip)
+          ))
+          if ($sqliteHash -ne $lock.sqlite_archive_sha3_256) {
+            throw 'SQLite archive hash differs from desktop/runtime-lock.json.'
+          }
+          Expand-Archive -LiteralPath $sqliteZip -DestinationPath $sqlite
+          $dll = Join-Path $sqlite 'sqlite3.dll'
+          if ((Get-FileHash -LiteralPath $dll -Algorithm SHA256).Hash -ne $lock.sqlite_dll_sha256) {
+            throw 'SQLite DLL hash differs from desktop/runtime-lock.json.'
+          }
+          Copy-Item -LiteralPath $dll -Destination $runtime -Force
+
+          # The embedded interpreter needs explicit import paths for the suite and its subprocesses.
+          $pythonPathFile = Get-ChildItem -LiteralPath $runtime -Filter 'python*._pth'
+          Add-Content -LiteralPath $pythonPathFile.FullName -Value @('site-packages', $env:GITHUB_WORKSPACE)
+          $python = Join-Path $runtime 'python.exe'
+          $version = & $python -c "import platform; print(platform.python_version())"
+          if ($LASTEXITCODE -ne 0 -or $version -cne $lock.python_version) {
+            throw 'CPython version differs from desktop/runtime-lock.json.'
+          }
+          $source = & $python -c "import sqlite3; print(sqlite3.connect(':memory:').execute('select sqlite_source_id()').fetchone()[0])"
+          if ($LASTEXITCODE -ne 0 -or $source -cne $lock.sqlite_source_id) {
+            throw 'Loaded SQLite source ID differs from desktop/runtime-lock.json.'
+          }
+          "CPython $version, SQLite $($lock.sqlite_version) ($source)"
+
+          python -m pip --python $python install --only-binary=:all: --target (Join-Path $runtime 'site-packages') -r requirements.txt
+          if ($LASTEXITCODE -ne 0) { throw 'Could not install dependencies for locked CPython.' }
+          "PDS_CI_PYTHON=$python" >> $env:GITHUB_ENV
+
+      - name: Run regression tests using synthetic data
+        shell: pwsh
+        run: |
+          # The archive tests exercise hard links and Windows filesystem permissions.
+          $testTemp = Join-Path $env:LOCALAPPDATA 'Temp\pds-ci'
+          New-Item -ItemType Directory -Path $testTemp -Force | Out-Null
+          $env:TEMP = $env:TMP = $testTemp
+          # The CLI emits UTF-8, including when the Windows locale uses another code page.
+          & $env:PDS_CI_PYTHON -X utf8 -B -m unittest discover -s tests -v
+          exit $LASTEXITCODE
