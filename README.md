@@ -1,5 +1,7 @@
 # 个人数字空间 · Personal Digital Space
 
+[![Windows CI](https://github.com/sxingyao808-glitch/personal-digital-space/actions/workflows/windows-ci.yml/badge.svg?branch=docs%2Fv1-open-source-polish&event=push)](https://github.com/sxingyao808-glitch/personal-digital-space/actions/workflows/windows-ci.yml?query=branch%3Adocs%2Fv1-open-source-polish)
+
 一个本地优先的个人档案，用来记录项目、经历和思考，建立它们之间的联系，并把选中的内容发布成静态网站。
 
 把正在推进的项目、过程笔记和事后回顾保存在自己的设备上。记录默认私有，准备分享时可以先预览公开范围，再确认发布。
